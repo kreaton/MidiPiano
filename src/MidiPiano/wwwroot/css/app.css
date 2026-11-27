@@ -1,0 +1,51 @@
+/* Fonts are served with the app (SIL OFL 1.1, see fonts/*-OFL.txt), so no request goes to a font CDN. */
+@font-face { font-family: Manrope; src: url('../fonts/manrope-latin-wght.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('../fonts/dm-mono-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('../fonts/dm-mono-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+
+:root { color-scheme: dark; font-family: Manrope, system-ui, sans-serif; background: #10131b; color: #f4f5fa; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% 0%, #252d41 0, #10131b 58%); }
+.shell { max-width: 1040px; margin: 0 auto; padding: 54px 24px 38px; }
+header { margin-bottom: 30px; }
+.eyebrow { font: 500 11px 'DM Mono', monospace; letter-spacing: .18em; color: #9ca9c5; }
+h1 { margin: 10px 0; font-size: clamp(36px, 6vw, 64px); line-height: 1; letter-spacing: -.055em; }
+h1 span { color: #a7b9ff; }
+h1:focus { outline: none; } /* FocusOnNavigate focuses the heading after navigation */
+.sub { color: #aab2c5; font-size: 15px; }
+.panel { background: #191e2a; border: 1px solid #30394d; border-radius: 20px; padding: 24px; box-shadow: 0 24px 80px #0005; }
+.toolbar { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+label { display: grid; gap: 8px; flex: 1; min-width: 210px; color: #aab2c5; font-size: 12px; }
+select, button { font: inherit; border-radius: 10px; border: 1px solid #3b455b; padding: 11px 14px; color: #f5f6fb; background: #242b3a; }
+button { cursor: pointer; font-size: 13px; font-weight: 700; transition: transform .08s, background .12s; }
+button:active { transform: translateY(1px); }
+button:disabled { color: #b7c6be; background: #284438; border-color: #426c55; cursor: default; }
+button.enable { background: #a7b9ff; color: #151a29; border-color: #a7b9ff; }
+button.release { background: transparent; }
+.status { min-height: 30px; padding: 14px 0 8px; color: #aab2c5; font: 12px 'DM Mono', monospace; }
+.keyboard { position: relative; height: 240px; width: 100%; user-select: none; touch-action: none; margin: 8px 0 20px; }
+.pkey { position: absolute; top: 0; border-radius: 0 0 9px 9px; display: flex; flex-direction: column; justify-content: end; align-items: center; }
+.pkey.white { width: 12.5%; height: 100%; background: linear-gradient(#fff 0%, #e7eaf1 100%); border: 1px solid #aab0bd; color: #50586a; z-index: 1; box-shadow: inset 0 -5px 0 #cfd3dc; }
+.pkey.white:active { background: #cbd5ff; box-shadow: inset 0 -2px 0 #aeb9e4; }
+.pkey.black { width: 6.2%; height: 61%; background: linear-gradient(135deg, #333b4d, #080a0f 70%); border: 1px solid #050609; color: white; z-index: 2; box-shadow: 0 5px 5px #0008; }
+.pkey.black:active { background: #6879b4; }
+.keyname { font-size: 12px; margin-bottom: 6px; }
+.keyhint { font: 11px 'DM Mono', monospace; margin-bottom: 14px; opacity: .7; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px 22px; color: #aab2c5; font-size: 12px; }
+kbd { display: inline-block; min-width: 22px; text-align: center; padding: 3px 5px; border: 1px solid #424c60; border-radius: 5px; background: #242b3a; color: #e9edf8; font: 11px 'DM Mono', monospace; }
+footer { margin-top: 20px; color: #778198; font-size: 12px; line-height: 1.7; }
+footer .build { margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 11px; opacity: .85; }
+footer a, .sub a { color: #a7b9ff; }
+#blazor-error-ui { background: #3a1d1d; color: #ffd9d9; bottom: 0; box-shadow: 0 -1px 2px #0005; display: none; left: 0; padding: 10px 20px 12px; position: fixed; width: 100%; z-index: 1000; }
+#blazor-error-ui .reload { color: #ffd9d9; }
+#blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 12px; top: 8px; }
+
+/* Loading screen shown until the WebAssembly runtime has started. */
+.boot { display: grid; place-items: center; min-height: 100vh; position: relative; }
+.loading-progress { position: relative; display: block; width: 8rem; height: 8rem; }
+.loading-progress circle { fill: none; stroke: #30394d; stroke-width: .6rem; transform-origin: 50% 50%; transform: rotate(-90deg); }
+.loading-progress circle:last-child { stroke: #a7b9ff; stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * .8), 500%; transition: stroke-dasharray .05s ease-in-out; }
+.loading-progress-text { position: absolute; text-align: center; font-weight: 700; inset: calc(50% + 4.6rem) 0 auto 0; color: #aab2c5; }
+.loading-progress-text:after { content: var(--blazor-load-percentage-text, "Loading"); }
+.boot p { position: absolute; inset: calc(50% + 6.4rem) 0 auto 0; margin: 0; text-align: center; color: #aab2c5; }
+@media (max-width: 600px) { .shell { padding: 32px 12px; } .panel { padding: 14px; } .keyboard { height: 190px; } .toolbar button { flex: 1; } }

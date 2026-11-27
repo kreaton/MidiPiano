@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "MidiPiano",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/MidiPiano", "--launch-profile", "http", "--no-launch-browser"],
+      "port": 5288
+    }
+  ]
+}

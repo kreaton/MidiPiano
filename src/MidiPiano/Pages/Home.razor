@@ -1,0 +1,181 @@
+@page "/"
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<PageTitle>MIDI Piano</PageTitle>
+
+<header>
+    <div class="eyebrow">WEB AUDIO · .NET 10</div>
+    <h1>MIDI <span>Piano</span></h1>
+    <p class="sub">Play sampled instruments with your mouse, touch, or computer keyboard.</p>
+</header>
+
+<section class="panel">
+    <div class="toolbar">
+        <label>
+            <span>Instrument</span>
+            <select @bind="selectedInstrument" @bind:after="InstrumentChanged">
+                @foreach (var instrument in Instruments)
+                {
+                    <option value="@instrument.Id">@instrument.Name</option>
+                }
+            </select>
+        </label>
+        <button class="enable" @onclick="EnableAudio" disabled="@audioReady">
+            @(audioReady ? "Audio enabled ✓" : "Enable audio")
+        </button>
+        <button class="release" @onclick="ReleaseAll">Release all</button>
+    </div>
+    <div class="status" role="status">@status</div>
+
+    <div class="keyboard" aria-label="One octave piano keyboard">
+        @foreach (var key in Keys)
+        {
+            <button @key="key.Note"
+                    class="pkey @(key.IsBlack ? "black" : "white")"
+                    style="left:@(key.LeftPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%;"
+                    aria-label="@key.Name"
+                    title="@($"{key.Name} · {key.Shortcut}")"
+                    @onpointerdown="(e) => PointerDown(key.Note, e)"
+                    @onpointerup="(e) => PointerUp(key.Note, e)"
+                    @onpointercancel="(e) => PointerUp(key.Note, e)"
+                    @onpointerleave="(e) => PointerLeave(key.Note, e)"
+                    @oncontextmenu:preventDefault>
+                @if (!key.IsBlack)
+                {
+                    <span class="keyname">@key.Name</span>
+                    <span class="keyhint">@key.Shortcut</span>
+                }
+            </button>
+        }
+    </div>
+
+    <div class="legend">
+        <span><kbd>A</kbd>–<kbd>K</kbd> white keys</span>
+        <span><kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys</span>
+        <span>Hold a key for sustain</span>
+    </div>
+</section>
+
+@code {
+    private IJSObjectReference? audioModule;
+    private bool audioReady;
+    private string status = "Click Enable audio to initialize the browser audio engine.";
+    private string selectedInstrument = "acoustic_grand_piano";
+
+    private sealed record InstrumentOption(string Id, string Name);
+    private static readonly InstrumentOption[] Instruments =
+    [
+        new("acoustic_grand_piano", "Acoustic Grand Piano"),
+        new("electric_piano_1", "Electric Piano"),
+        new("honkytonk_piano", "Honky-tonk Piano"),
+        new("drawbar_organ", "Drawbar Organ"),
+        new("acoustic_guitar_nylon", "Nylon Guitar"),
+        new("electric_guitar_clean", "Clean Electric Guitar"),
+        new("violin", "Violin"),
+        new("cello", "Cello"),
+        new("string_ensemble_1", "String Ensemble"),
+        new("flute", "Flute"),
+        new("trumpet", "Trumpet"),
+        new("synth_strings_1", "Synth Strings")
+    ];
+
+    private sealed record PianoKey(int Note, string Name, string Shortcut, bool IsBlack, double LeftPercent);
+    private static readonly PianoKey[] Keys = BuildKeys();
+
+    private static PianoKey[] BuildKeys()
+    {
+        // C4 through C5: seven white keys, five black keys.
+        var whiteNotes = new[] { 60, 62, 64, 65, 67, 69, 71, 72 };
+        var whiteNames = new[] { "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5" };
+        var shortcuts = new[] { "A", "S", "D", "F", "G", "H", "J", "K" };
+        var result = new List<PianoKey>();
+        for (var i = 0; i < whiteNotes.Length; i++)
+            result.Add(new(whiteNotes[i], whiteNames[i], shortcuts[i], false, i * 100.0 / 8));
+
+        // Position black keys centered on the boundary between adjacent white keys.
+        var blackNotes = new[] { 61, 63, 66, 68, 70 };
+        var blackNames = new[] { "C♯4", "D♯4", "F♯4", "G♯4", "A♯4" };
+        var blackShortcuts = new[] { "W", "E", "T", "Y", "U" };
+        var boundaries = new[] { 1, 2, 4, 5, 6 };
+        for (var i = 0; i < blackNotes.Length; i++)
+            result.Add(new(blackNotes[i], blackNames[i], blackShortcuts[i], true,
+                boundaries[i] * 100.0 / 8 - 3.1));
+
+        return result.OrderBy(k => k.LeftPercent).ToArray();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            audioModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/pianoAudio.js");
+            await audioModule.InvokeVoidAsync("installKeyboard");
+        }
+    }
+
+    private async Task EnableAudio()
+    {
+        if (audioModule is null) return;
+        try
+        {
+            status = "Loading instrument samples…";
+            await audioModule.InvokeVoidAsync("initialize", selectedInstrument);
+            audioReady = true;
+            status = "Ready. Play a key!";
+        }
+        catch (Exception ex)
+        {
+            status = $"Audio initialization failed: {ex.Message}";
+        }
+    }
+
+    private async Task InstrumentChanged()
+    {
+        if (audioModule is null || !audioReady) return;
+        status = "Loading instrument…";
+        try
+        {
+            await audioModule.InvokeVoidAsync("changeInstrument", selectedInstrument);
+            status = "Ready. Play a key!";
+        }
+        catch (Exception ex)
+        {
+            status = $"Could not load instrument: {ex.Message}";
+        }
+    }
+
+    private async Task PointerDown(int note, PointerEventArgs e)
+    {
+        if (audioModule is null || e.Button != 0) return;
+        await audioModule.InvokeVoidAsync("noteOn", note, 100);
+    }
+
+    private async Task PointerUp(int note, PointerEventArgs e)
+    {
+        if (audioModule is not null)
+            await audioModule.InvokeVoidAsync("noteOff", note);
+    }
+
+    private async Task PointerLeave(int note, PointerEventArgs e)
+    {
+        if (e.Buttons == 0 && audioModule is not null)
+            await audioModule.InvokeVoidAsync("noteOff", note);
+    }
+
+    private async Task ReleaseAll()
+    {
+        if (audioModule is not null)
+            await audioModule.InvokeVoidAsync("releaseAll");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (audioModule is not null)
+        {
+            try { await audioModule.InvokeVoidAsync("releaseAll"); }
+            catch { }
+            await audioModule.DisposeAsync();
+        }
+    }
+}
